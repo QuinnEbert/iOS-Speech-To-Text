@@ -240,8 +240,9 @@ static void DeriveBufferSize (AudioQueueRef audioQueue, AudioStreamBasicDescript
             if (startProcessing) {
                 [self cleanUpProcessingThread];
                 processing = YES;
-                processingThread = [[NSThread alloc] initWithTarget:self selector:@selector(postByteData:) object:aqData.encodedSpeexData];
-                [processingThread start];
+                [self saveByteData:aqData.encodedSpeexData];
+//                processingThread = [[NSThread alloc] initWithTarget:self selector:@selector(postByteData:) object:aqData.encodedSpeexData];
+//                [processingThread start];
                 if ([delegate respondsToSelector:@selector(showLoadingView)])
                     [delegate showLoadingView];
             }
@@ -277,6 +278,13 @@ static void DeriveBufferSize (AudioQueueRef audioQueue, AudioStreamBasicDescript
             samplesBelowSilence = 0;
         }
     }
+}
+
+- (void)saveByteData:(NSData *)byteData {
+    NSString *documentsPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+    NSString *filePath = [documentsPath stringByAppendingPathComponent:@"file.spx"];
+    [byteData writeToFile:filePath atomically:YES];
+    NSLog(@"Speex File saved to: %@/%@", documentsPath, @"file.spx");
 }
 
 - (void)postByteData:(NSData *)byteData {
