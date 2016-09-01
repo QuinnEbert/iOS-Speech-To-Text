@@ -241,13 +241,69 @@ static void DeriveBufferSize (AudioQueueRef audioQueue, AudioStreamBasicDescript
                 [self cleanUpProcessingThread];
                 processing = YES;
                 [self saveByteData:aqData.encodedSpeexData];
-//                processingThread = [[NSThread alloc] initWithTarget:self selector:@selector(postByteData:) object:aqData.encodedSpeexData];
+                [self decodeSpeex:aqData.encodedSpeexData];
+                
+                //                processingThread = [[NSThread alloc] initWithTarget:self selector:@selector(postByteData:) object:aqData.encodedSpeexData];
 //                [processingThread start];
                 if ([delegate respondsToSelector:@selector(showLoadingView)])
                     [delegate showLoadingView];
             }
         }
     }
+}
+
+- (void)decodeSpeex:(NSData *)data
+{
+    NSLog(@"decodeSpeex");
+    NSMutableData *raw = [[NSMutableData alloc] init];
+    const char* fileBytes = (const char*)[data bytes];
+    const char* waveBytes = malloc(sizeof(char) * 1024);
+    //    NSUInteger length = [data length];
+    //    NSUInteger index;
+    
+    //    short out[FRAME_SIZE];
+    //    float output[FRAME_SIZE];
+    spx_int16_t spx[FRAME_SIZE];
+    char cbits[200];
+    int nbBytes;
+    void *state;
+    SpeexBits bits;
+    int tmp = 1;
+    
+    state = speex_decoder_init(&speex_wb_mode);
+    speex_decoder_ctl(state, SPEEX_SET_ENH, &tmp);
+    
+    speex_bits_init(&bits);
+    
+    //    for (index = 0; index<length; index++)
+    while (fileBytes != '\0')
+    {
+        nbBytes = fileBytes[0];
+        NSLog(@"decodeBytes: %d", nbBytes);
+        
+        if (nbBytes <= 0)
+            break;
+        //        szInput = fread(cbits, 1, nbBytes, file);
+        fileBytes++;
+        memcpy(cbits, fileBytes, nbBytes);
+        fileBytes+=nbBytes;
+        
+        //Do something with each byte
+        speex_bits_read_from(&bits, cbits, nbBytes);
+        //        speex_decode(state, &bits, output);
+        speex_decode_int(state, &bits, spx);
+        
+        //        for (i=0;i<FRAME_SIZE;i++)
+        //            out[i]=spx[i];
+        //        memcpy(waveBytes, spx, FRAME_SIZE);
+        [raw appendBytes:spx length:nbBytes];
+        //        fwrite(out, sizeof(short), FRAME_SIZE, stdout);
+    }
+    speex_decoder_destroy(state);
+    speex_bits_destroy(&bits);
+    NSString *documentsPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+    NSString *filePath = [documentsPath stringByAppendingPathComponent:@"file.raw"];
+    [raw writeToFile:filePath atomically:YES];
 }
 
 - (void)checkMeter {
