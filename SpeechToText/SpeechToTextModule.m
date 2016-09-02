@@ -10,6 +10,7 @@
 #import "SineWaveViewController.h"
 
 #define FRAME_SIZE 110
+#define INPUT_FRSZ 42
 
 @interface SpeechToTextModule ()
 
@@ -241,9 +242,11 @@ static void DeriveBufferSize (AudioQueueRef audioQueue, AudioStreamBasicDescript
                 [self cleanUpProcessingThread];
                 processing = YES;
                 [self saveByteData:aqData.encodedSpeexData];
-                [self decodeSpeex:aqData.encodedSpeexData];
+                [self decodeSpeexFile];
+//                [self decodeSpeex:aqData.encodedSpeexData];
+//                [self performSelectorOnMainThread:@selector(decodeSpeex:) withObject:aqData.encodedSpeexData waitUntilDone:YES];
                 
-                //                processingThread = [[NSThread alloc] initWithTarget:self selector:@selector(postByteData:) object:aqData.encodedSpeexData];
+//                processingThread = [[NSThread alloc] initWithTarget:self selector:@selector(postByteData:) object:aqData.encodedSpeexData];
 //                [processingThread start];
                 if ([delegate respondsToSelector:@selector(showLoadingView)])
                     [delegate showLoadingView];
@@ -252,17 +255,86 @@ static void DeriveBufferSize (AudioQueueRef audioQueue, AudioStreamBasicDescript
     }
 }
 
+- (void)decodeSpeexFile
+{
+    NSString *documentsPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+    NSString *iFile = [documentsPath stringByAppendingPathComponent:@"file.spx"];
+    NSString *oFile = [documentsPath stringByAppendingPathComponent:@"file.raw"];
+    
+    FILE *fin;
+    FILE *fout;
+    char *inFile;
+    char *outFile;
+    short outs[FRAME_SIZE];
+    float outf[FRAME_SIZE];
+    char cbits[200];
+    char buff[200];
+    int nbBytes;
+    int szInput;
+    void *state;
+    SpeexBits bits;
+    int i, tmp, x;
+    
+    state = speex_decoder_init(&speex_wb_mode);
+    tmp = 1;
+    //speex_decoder_ctl(state, SPEEX_SET_ENH, &tmp);
+    
+    int quality = 8;
+    speex_encoder_ctl(state, SPEEX_SET_QUALITY, &quality);
+    int vbr = 1;
+    speex_encoder_ctl(state, SPEEX_SET_VBR, &vbr);
+    speex_encoder_ctl(state, SPEEX_GET_FRAME_SIZE, &(aqData.speex_samples_per_frame));
+
+    speex_bits_init(&bits);
+    
+    inFile = (char *)[iFile UTF8String];
+    fin = fopen(inFile, "rb");
+    
+    outFile = (char *)[oFile UTF8String];
+    fout = fopen(outFile, "wb");
+    
+    memset(buff, 0, sizeof(buff));
+    memset(outs, 0, sizeof(outs));
+    memset(outf, 0, sizeof(outf));
+
+    while (1)
+    {
+        fread(&buff, 1, 1, fin);
+        if (feof(fin))
+            break;
+        
+        nbBytes = (int)buff[0];
+        NSLog(@"nbBytes: %d", nbBytes);
+        szInput = fread(cbits, 1, nbBytes, fin);
+        
+        speex_bits_read_from(&bits, cbits, nbBytes);
+        
+        speex_decode(state, &bits, outf);
+        
+        for (i = 0; i < FRAME_SIZE; i++)
+        {
+            outs[i] = outf[i];
+        }
+        fwrite(outs, sizeof(short), FRAME_SIZE, fout);
+    }
+    
+    speex_decoder_destroy(state);
+    speex_bits_destroy(&bits);
+    fclose(fout);
+    fclose(fin);
+}
+
 - (void)decodeSpeex:(NSData *)data
 {
     NSLog(@"decodeSpeex");
     NSMutableData *raw = [[NSMutableData alloc] init];
     const char* fileBytes = (const char*)[data bytes];
     const char* waveBytes = malloc(sizeof(char) * 1024);
-    //    NSUInteger length = [data length];
-    //    NSUInteger index;
+//    NSUInteger length = [data length];
+//    NSUInteger index;
     
-    //    short out[FRAME_SIZE];
-    //    float output[FRAME_SIZE];
+//    short out[FRAME_SIZE];
+//    float output[FRAME_SIZE];
     spx_int16_t spx[FRAME_SIZE];
     char cbits[200];
     int nbBytes;
@@ -301,9 +373,9 @@ static void DeriveBufferSize (AudioQueueRef audioQueue, AudioStreamBasicDescript
     }
     speex_decoder_destroy(state);
     speex_bits_destroy(&bits);
-    NSString *documentsPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
-    NSString *filePath = [documentsPath stringByAppendingPathComponent:@"file.raw"];
-    [raw writeToFile:filePath atomically:YES];
+//    NSString *documentsPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+//    NSString *filePath = [documentsPath stringByAppendingPathComponent:@"file.raw"];
+//    [raw writeToFile:filePath atomically:YES];
 }
 
 - (void)checkMeter {
