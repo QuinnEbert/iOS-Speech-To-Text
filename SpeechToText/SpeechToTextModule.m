@@ -9,7 +9,7 @@
 #import "SpeechToTextModule.h"
 #import "SineWaveViewController.h"
 
-#define FRAME_SIZE 110
+#define FRAME_SIZE 320
 #define INPUT_FRSZ 42
 
 @interface SpeechToTextModule ()
@@ -92,7 +92,7 @@ static void DeriveBufferSize (AudioQueueRef audioQueue, AudioStreamBasicDescript
         speex_bits_init(&(aqData.speex_bits)); 
         aqData.speex_enc_state = speex_encoder_init(&speex_wb_mode);
         
-        int quality = 8;
+        int quality = 10;
         speex_encoder_ctl(aqData.speex_enc_state, SPEEX_SET_QUALITY, &quality);
         int vbr = 1;
         speex_encoder_ctl(aqData.speex_enc_state, SPEEX_SET_VBR, &vbr);
@@ -257,6 +257,7 @@ static void DeriveBufferSize (AudioQueueRef audioQueue, AudioStreamBasicDescript
 
 - (void)decodeSpeexFile
 {
+    NSLog(@"in decodeSpeexFile!");
     NSString *documentsPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
     NSString *iFile = [documentsPath stringByAppendingPathComponent:@"file.spx"];
     NSString *oFile = [documentsPath stringByAppendingPathComponent:@"file.raw"];
@@ -279,7 +280,7 @@ static void DeriveBufferSize (AudioQueueRef audioQueue, AudioStreamBasicDescript
     tmp = 1;
     //speex_decoder_ctl(state, SPEEX_SET_ENH, &tmp);
     
-    int quality = 8;
+    int quality = 10;
     speex_encoder_ctl(state, SPEEX_SET_QUALITY, &quality);
     int vbr = 1;
     speex_encoder_ctl(state, SPEEX_SET_VBR, &vbr);
@@ -326,7 +327,7 @@ static void DeriveBufferSize (AudioQueueRef audioQueue, AudioStreamBasicDescript
 
 - (void)decodeSpeex:(NSData *)data
 {
-    NSLog(@"decodeSpeex");
+    NSLog(@"in decodeSpeex!");
     NSMutableData *raw = [[NSMutableData alloc] init];
     const char* fileBytes = (const char*)[data bytes];
     const char* waveBytes = malloc(sizeof(char) * 1024);
