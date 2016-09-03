@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #import <AudioToolbox/AudioToolbox.h>
-#import <speex/speex.h>
+#import "speex/speex.h"
 #import "SineWaveViewController.h"
 
 #define kNumberBuffers 3

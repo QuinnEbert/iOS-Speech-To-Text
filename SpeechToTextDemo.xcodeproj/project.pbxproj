@@ -428,6 +428,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "SpeechToTextDemo/SpeechToTextDemo-Prefix.pch";
 				HEADER_SEARCH_PATHS = (
+					"$(SOURCE_ROOT)/SpeechToText/speex_headers",
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 				);
@@ -455,6 +456,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "SpeechToTextDemo/SpeechToTextDemo-Prefix.pch";
 				HEADER_SEARCH_PATHS = (
+					"$(SOURCE_ROOT)/SpeechToText/speex_headers",
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 				);
